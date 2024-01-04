@@ -10,7 +10,7 @@ from mqttservice import MQTTClient
 from picamera2 import Picamera2
 from PIL import Image
 from gpiozero import CPUTemperature
-
+#engine
 class ImageProcesing:
     def __init__(self, model_path):
         self.cam = Picamera2()
