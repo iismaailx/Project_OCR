@@ -6,22 +6,22 @@ import pytesseract
 import textdistance
 import numpy as np
 import pandas as pd
-from datetime import date
+import datetime
 from operator import itemgetter
 
 ROOT_PATH = os.getcwd()
 # IMAGE_PATH = os.path.join(ROOT_PATH, 'Kywa.jpg')
 
 #LINE_REC_PATH = os.path.join(ROOT_PATH, 'data/ID_CARD_KEYWORDS.csv')
-LINE_REC_PATH = r'/home/rnd/Development/OCR_RASPI/data/ID_CARD_KEYWORDS.csv'
-CITIES_REC_PATH = r'/home/rnd/Development/OCR_RASPI/data/KOTA.csv'
-RELIGION_REC_PATH = r'/home/rnd/Development/OCR_RASPI/data/RELIGIONS.csv'
-MARRIAGE_REC_PATH = r'/home/rnd/Development/OCR_RASPI/data/MARRIAGE_STATUS.csv'
-JENIS_KELAMIN_REC_PATH = r'/home/rnd/Development/OCR_RASPI/data/JENIS_KELAMIN.csv'
-PROVINCE_REC_PATH = r'/home/rnd/Development/OCR_RASPI/data/PROVINSI.csv'
-DISTRIC_REC_PATH = r'/home/rnd/Development/OCR_RASPI/data/KECAMATAN.csv'
-PEKERJAAN_REC_PATH = r'/home/rnd/Development/OCR_RASPI/data/PEKERJAAN.csv'
-DESA_KEL_REC_PATH = r'/home/rnd/Development/OCR_RASPI/data/VILLAGES.csv'
+LINE_REC_PATH = r'/home/rnd/Development/FINAL/data/ID_CARD_KEYWORDS.csv'
+CITIES_REC_PATH = r'/home/rnd/Development/FINAL/data/CITIES.csv'
+RELIGION_REC_PATH = r'/home/rnd/Development/FINAL/data/RELIGIONS.csv'
+MARRIAGE_REC_PATH = r'/home/rnd/Development/FINAL/data/MARRIAGE_STATUS.csv'
+JENIS_KELAMIN_REC_PATH = r'/home/rnd/Development/FINAL/data/JENIS_KELAMIN.csv'
+PROVINCE_REC_PATH = r'/home/rnd/Development/FINAL/data/PROVINSI.csv'
+DISTRIC_REC_PATH = r'/home/rnd/Development/FINAL/data/KECAMATAN.csv'
+PEKERJAAN_REC_PATH = r'/home/rnd/Development/FINAL/data/PEKERJAAN.csv'
+DESA_KEL_REC_PATH = r'/home/rnd/Development/FINAL/data/VILLAGES.csv'
 NEED_COLON = [3, 4, 6, 8, 10, 11, 12, 13, 14, 15, 17, 18, 19, 21]
 NEXT_LINE = 9
 ID_NUMBER = 3
@@ -117,7 +117,7 @@ def sort_contours(cnts, method="left-to-right"):
     return cnts, boundingBoxes
 
 def return_id_number(image, img_gray):
-    img_mod = cv2.imread("/home/rnd/Development/OCR_RASPI/data/module1.png")
+    img_mod = cv2.imread("/home/rnd/Development/FINAL/data/module1.png")
     rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
     tophat = cv2.morphologyEx(img_gray, cv2.MORPH_TOPHAT, rectKernel)
 
@@ -393,257 +393,260 @@ def main(image):
             else:
                 last_result_list.append(tmp_list)
     # print(last_result_list)
-    
-    for tmp_data in last_result_list:
-        if '—' in tmp_data:
-            tmp_data.remove('—')
+    try:
+        if len(last_result_list) >= 3 :
+            for tmp_data in last_result_list:
+                if '—' in tmp_data:
+                    tmp_data.remove('—')
 
-        if 'PROVINSI' in tmp_data:
-            if len(tmp_data) >= 1:
-                for tmp_index, tmp_word in enumerate(tmp_data[1:]):
-                    if tmp_word:
-                        tmp_sim_list = [textdistance.damerau_levenshtein.normalized_similarity(tmp_word, tmp_word_) for tmp_word_ in province_df[0].values]
+                if 'PROVINSI' in tmp_data:
+                    if len(tmp_data) >= 1:
+                        for tmp_index, tmp_word in enumerate(tmp_data[1:]):
+                            if tmp_word:
+                                tmp_sim_list = [textdistance.damerau_levenshtein.normalized_similarity(tmp_word, tmp_word_) for tmp_word_ in province_df[0].values]
 
-                        tmp_sim_np = np.asarray(tmp_sim_list)
-                        arg_max = np.argmax(tmp_sim_np)
-                        if tmp_sim_np[arg_max] >= 0.6:
-                            tmp_data[tmp_index + 1] = province_df[0].values[arg_max]
-                    # print("prov done")
+                                tmp_sim_np = np.asarray(tmp_sim_list)
+                                arg_max = np.argmax(tmp_sim_np)
+                                if tmp_sim_np[arg_max] >= 0.6:
+                                    tmp_data[tmp_index + 1] = province_df[0].values[arg_max]
+                            # print("prov done")
 
-        if 'KABUPATEN' in tmp_data or 'KOTA' in tmp_data:
-            if len(tmp_data) >= 1:
-                for tmp_index, tmp_word in enumerate(tmp_data[1:]):
-                    if tmp_word:
-                        tmp_sim_list = [textdistance.damerau_levenshtein.normalized_similarity(tmp_word, tmp_word_) for tmp_word_ in cities_df[0].values]
+                if 'KABUPATEN' in tmp_data or 'KOTA' in tmp_data:
+                    if len(tmp_data) >= 1:
+                        for tmp_index, tmp_word in enumerate(tmp_data[1:]):
+                            if tmp_word:
+                                tmp_sim_list = [textdistance.damerau_levenshtein.normalized_similarity(tmp_word, tmp_word_) for tmp_word_ in cities_df[0].values]
 
-                        tmp_sim_np = np.asarray(tmp_sim_list)
-                        arg_max = np.argmax(tmp_sim_np)
-                        if tmp_sim_np[arg_max] >= 0.6:
-                            tmp_data[tmp_index + 1] = cities_df[0].values[arg_max]
-                # print("kab done")  
-                #print(test)
-        if 'Nama' in tmp_data:
-            if len(tmp_data) >= 2:
-                nama = ' '.join(tmp_data[2:])
-                nama = re.sub('[^A-Z. ]', '', nama)
-                if len(nama.split()) == 1:
-                    nama = re.sub('[^A-Z.]', '', nama)
-            # print("nama  done")
+                                tmp_sim_np = np.asarray(tmp_sim_list)
+                                arg_max = np.argmax(tmp_sim_np)
+                                if tmp_sim_np[arg_max] >= 0.6:
+                                    tmp_data[tmp_index + 1] = cities_df[0].values[arg_max]
+                        # print("kab done")  
+                        #print(test)
+                if 'Nama' in tmp_data:
+                    if len(tmp_data) >= 2:
+                        nama = ' '.join(tmp_data[2:])
+                        nama = re.sub('[^A-Z. ]', '', nama)
+                        if len(nama.split()) == 1:
+                            nama = re.sub('[^A-Z.]', '', nama)
+                    # print("nama  done")
 
-        if 'NIK' in tmp_data:
-            if len(id_number) >= 16 and len(tmp_data) >= 2:
-                # id_number = tmp_data[2]
-                if "D" in id_number:
-                    id_number = id_number.replace("D", "0")
-                if "?" in id_number:
-                    id_number = id_number.replace("?", "7")
-                if "L" in id_number:
-                    id_number = id_number.replace("L", "1")
-                if "I" in id_number:
-                    id_number = id_number.replace("I", "1")
-                if "R" in id_number: 
-                    id_number = id_number.replace("R", "2")
-                if "O" in id_number:
-                    id_number = id_number.replace("O", "0")   
-                if "o" in id_number:
-                    id_number = id_number.replace("o", "0")
-                if "S" in id_number:
-                    id_number = id_number.replace("S", "5")
-                if "G" in id_number:
-                    id_number = id_number.replace("G", "6")
+                if 'NIK' in tmp_data:
+                    if len(id_number) >= 16 and len(tmp_data) >= 2:
+                        # id_number = tmp_data[2]
+                        if "D" in id_number:
+                            id_number = id_number.replace("D", "0")
+                        if "?" in id_number:
+                            id_number = id_number.replace("?", "7")
+                        if "L" in id_number:
+                            id_number = id_number.replace("L", "1")
+                        if "I" in id_number:
+                            id_number = id_number.replace("I", "1")
+                        if "R" in id_number: 
+                            id_number = id_number.replace("R", "2")
+                        if "O" in id_number:
+                            id_number = id_number.replace("O", "0")   
+                        if "o" in id_number:
+                            id_number = id_number.replace("o", "0")
+                        if "S" in id_number:
+                            id_number = id_number.replace("S", "5")
+                        if "G" in id_number:
+                            id_number = id_number.replace("G", "6")
 
-                while len(tmp_data) > 2:
-                    tmp_data.pop()
-                tmp_data.append(id_number)
-            else:
-                while len(tmp_data) > 3:
-                    tmp_data.pop()
-                if len(tmp_data) < 3:
-                    tmp_data.append(id_number)
-                if len(tmp_data) >= 2:
-                    tmp_data[2] = id_number
-            # print("nik done")
+                        while len(tmp_data) > 2:
+                            tmp_data.pop()
+                        tmp_data.append(id_number)
+                    else:
+                        while len(tmp_data) > 3:
+                            tmp_data.pop()
+                        if len(tmp_data) < 3:
+                            tmp_data.append(id_number)
+                        if len(tmp_data) >= 2:
+                            tmp_data[2] = id_number
+                    # print("nik done")
 
-        if 'Agama' in tmp_data:
-            if len(tmp_data) >= 1:
-                for tmp_index, tmp_word in enumerate(tmp_data[1:]):
-                    if tmp_word:
-                        tmp_sim_list = [textdistance.damerau_levenshtein.normalized_similarity(tmp_word, tmp_word_) for tmp_word_ in religion_df[0].values]
+                if 'Agama' in tmp_data:
+                    if len(tmp_data) >= 1:
+                        for tmp_index, tmp_word in enumerate(tmp_data[1:]):
+                            if tmp_word:
+                                tmp_sim_list = [textdistance.damerau_levenshtein.normalized_similarity(tmp_word, tmp_word_) for tmp_word_ in religion_df[0].values]
 
-                        tmp_sim_np = np.asarray(tmp_sim_list)
-                        arg_max = np.argmax(tmp_sim_np)
-        
-                        if tmp_sim_np[arg_max] >= 0.6:
-                           tmp_data[tmp_index + 1] = religion_df[0].values[arg_max]
-                # print("agama done")
-                                       
-        if 'Status' in tmp_data or 'Perkawinan' in tmp_data:
-            if len(tmp_data) >= 2:
-                for tmp_index, tmp_word in enumerate(tmp_data[2:]): #tadinya index 2
-                    if tmp_word:
-                        tmp_sim_list = [textdistance.damerau_levenshtein.normalized_similarity(tmp_word, tmp_word_) for tmp_word_ in marriage_df[0].values]
-
-                        tmp_sim_np = np.asarray(tmp_sim_list)
-                        arg_max = np.argmax(tmp_sim_np)
-        
-                        if tmp_sim_np[arg_max] >= 0.6:
-                            tmp_data[tmp_index + 2] = marriage_df[0].values[arg_max]                 
-                # print("stat done")
+                                tmp_sim_np = np.asarray(tmp_sim_list)
+                                arg_max = np.argmax(tmp_sim_np)
                 
-        if 'Alamat' in tmp_data:
-            for tmp_index in range(len(tmp_data)):
-                if tmp_index:
-                    if "!" in tmp_data[tmp_index]:
-                        tmp_data[tmp_index] = tmp_data[tmp_index].replace("!", "I")
-                    if "1" in tmp_data[tmp_index]:
-                        tmp_data[tmp_index] = tmp_data[tmp_index].replace("1", "I")
-                    if "i" in tmp_data[tmp_index]:
-                        tmp_data[tmp_index] = tmp_data[tmp_index].replace("i", "I")
-                    if "RI" in tmp_data[tmp_index]:
-                        tmp_data[tmp_index] = tmp_data[tmp_index].replace("RI", 'RT')
-                    if "Rw" in tmp_data[tmp_index]:
-                        tmp_data[tmp_index] = tmp_data[tmp_index].replace("Rw", 'RW')
-                    if "rw" in tmp_data[tmp_index]:
-                        tmp_data[tmp_index] = tmp_data[tmp_index].replace("rw", 'RW')
-                    if "rt" in tmp_data[tmp_index]:
-                        tmp_data[tmp_index] = tmp_data[tmp_index].replace("rt", 'RT')
-                # print("alamt done")
-                
-        if 'RT/RW' in tmp_data or 'RT' in tmp_data or 'RW' in tmp_data:
-            if len(tmp_data) >= 3:
-                tmp_data = [item for item in tmp_data if item != ""]
-                for index, elemen in enumerate(tmp_data):
-                    if '“' in elemen:
-                        tmp_data[index] = tmp_data[index].replace('“', '')
-                    if '"' in elemen:
-                        tmp_data[index] = tmp_data[index].replace('"', '')
-                    if 'f' in elemen:
-                        tmp_data[index] = tmp_data[index].replace('f', '/')
-                    if elemen.startswith('/') or elemen.endswith('/') and elemen[1:].isdigit():
-                        tmp_data[index] = elemen.replace('/', '')
-                    if re.match(r'^(\d{3})(\d{3})$', elemen):
-                        tmp_data[index] = re.sub(r'^(\d{3})(\d{3})$', r'\1/\2', elemen)
-        
-                    tmp_data = [re.sub(r'^\d{4,}', lambda x: x.group()[1:], item) for item in tmp_data]
-                    if '/' not in tmp_data and len(tmp_data) <= 3:
-                        clean_ = [item for item in tmp_data if re.match(r'\d{3}', item)]
-                        clean_ = [i.split('/') for i in clean_]
-                        clean_[0] = '/'.join(clean_[0])
-                        index = tmp_data.index(':')
-                        tmp_data = tmp_data[:index+ 1]
-                        tmp_data = tmp_data + clean_
+                                if tmp_sim_np[arg_max] >= 0.6:
+                                    tmp_data[tmp_index + 1] = religion_df[0].values[arg_max]
+                        # print("agama done")
+                                            
+                if 'Status' in tmp_data or 'Perkawinan' in tmp_data:
+                    if len(tmp_data) >= 2:
+                        for tmp_index, tmp_word in enumerate(tmp_data[2:]): #tadinya index 2
+                            if tmp_word:
+                                tmp_sim_list = [textdistance.damerau_levenshtein.normalized_similarity(tmp_word, tmp_word_) for tmp_word_ in marriage_df[0].values]
 
-                    if '/' not in tmp_data and len(tmp_data) > 3:
-                        tmp_data.insert(3, '/')
-                        tmp_data = [x for x in tmp_data if x != '']
-            # print("rtrw done")
+                                tmp_sim_np = np.asarray(tmp_sim_list)
+                                arg_max = np.argmax(tmp_sim_np)
+                
+                                if tmp_sim_np[arg_max] >= 0.6:
+                                    tmp_data[tmp_index + 2] = marriage_df[0].values[arg_max]                 
+                        # print("stat done")
+                        
+                if 'Alamat' in tmp_data:
+                    for tmp_index in range(len(tmp_data)):
+                        if tmp_index:
+                            if "!" in tmp_data[tmp_index]:
+                                tmp_data[tmp_index] = tmp_data[tmp_index].replace("!", "I")
+                            if "1" in tmp_data[tmp_index]:
+                                tmp_data[tmp_index] = tmp_data[tmp_index].replace("1", "I")
+                            if "i" in tmp_data[tmp_index]:
+                                tmp_data[tmp_index] = tmp_data[tmp_index].replace("i", "I")
+                            if "RI" in tmp_data[tmp_index]:
+                                tmp_data[tmp_index] = tmp_data[tmp_index].replace("RI", 'RT')
+                            if "Rw" in tmp_data[tmp_index]:
+                                tmp_data[tmp_index] = tmp_data[tmp_index].replace("Rw", 'RW')
+                            if "rw" in tmp_data[tmp_index]:
+                                tmp_data[tmp_index] = tmp_data[tmp_index].replace("rw", 'RW')
+                            if "rt" in tmp_data[tmp_index]:
+                                tmp_data[tmp_index] = tmp_data[tmp_index].replace("rt", 'RT')
+                        # print("alamt done")
+                        
+                if 'RT/RW' in tmp_data or 'RT' in tmp_data or 'RW' in tmp_data:
+                    if len(tmp_data) >= 3:
+                        tmp_data = [item for item in tmp_data if item != ""]
+                        for index, elemen in enumerate(tmp_data):
+                            if '“' in elemen:
+                                tmp_data[index] = tmp_data[index].replace('“', '')
+                            if '"' in elemen:
+                                tmp_data[index] = tmp_data[index].replace('"', '')
+                            if 'f' in elemen:
+                                tmp_data[index] = tmp_data[index].replace('f', '/')
+                            if elemen.startswith('/') or elemen.endswith('/') and elemen[1:].isdigit():
+                                tmp_data[index] = elemen.replace('/', '')
+                            if re.match(r'^(\d{3})(\d{3})$', elemen):
+                                tmp_data[index] = re.sub(r'^(\d{3})(\d{3})$', r'\1/\2', elemen)
+                
+                            tmp_data = [re.sub(r'^\d{4,}', lambda x: x.group()[1:], item) for item in tmp_data]
+                            if '/' not in tmp_data and len(tmp_data) <= 3:
+                                clean_ = [item for item in tmp_data if re.match(r'\d{3}', item)]
+                                clean_ = [i.split('/') for i in clean_]
+                                clean_[0] = '/'.join(clean_[0])
+                                index = tmp_data.index(':')
+                                tmp_data = tmp_data[:index+ 1]
+                                tmp_data = tmp_data + clean_
+
+                            if '/' not in tmp_data and len(tmp_data) > 3:
+                                tmp_data.insert(3, '/')
+                                tmp_data = [x for x in tmp_data if x != '']
+                    # print("rtrw done")
+                    
+                # if 'Kel/Desa' in tmp_data or 'Kel' in tmp_data or 'Desa' in tmp_data:
+                #     if len(tmp_data) >= 1:
+                #         for tmp_index, tmp_word in enumerate(tmp_data[1:]):
+                #             if tmp_word:
+                #                 tmp_sim_list = [textdistance.damerau_levenshtein.normalized_similarity(tmp_word, tmp_word_) for tmp_word_ in desa_kel_df[0].values]
+
+                #                 tmp_sim_np = np.asarray(tmp_sim_list)
+                #                 arg_max = np.argmax(tmp_sim_np)
+                #                 if tmp_sim_np[arg_max] >= 0.6:
+                #                     tmp_data[tmp_index + 1] = desa_kel_df[0].values[arg_max]
+                #         # print("kel des done")  
+                        
+                if 'Jenis' in tmp_data or 'Kelamin' in tmp_data:
+                    if len(tmp_data) >= 2:
+                        for tmp_index, tmp_word in enumerate(tmp_data[2:]):
+                            tmp_sim_list = [textdistance.damerau_levenshtein.normalized_similarity(tmp_word, tmp_word_) for tmp_word_ in jenis_kelamin_df[0].values]
+
+                            tmp_sim_np = np.asarray(tmp_sim_list)
+                            arg_max = np.argmax(tmp_sim_np)
+
+                            if tmp_sim_np[arg_max] >= 0.6:
+                                tmp_data[tmp_index + 2] = jenis_kelamin_df[0].values[arg_max]
+                    # print("jenis done")
+                
+                if 'Gol.' in tmp_data or ' Darah' in tmp_data or 'Darah' in tmp_data:
+                    if len(tmp_data) >= 4:
+                        if tmp_data[3] == '0':
+                                tmp_data[3] = tmp_data[3].replace('0', 'O')
+                        if tmp_data[3] == '8':
+                                tmp_data[3] = tmp_data[3].replace('8', 'B')
+                    # print("gol done")
+
+                if 'Tempat' in tmp_data or 'Tgl' in tmp_data or 'Lahir' in tmp_data:
+                    join_tmp = ' '.join(tmp_data)
+
+                    match_tgl1 = re.search("([0-9]{2}\-[0-9]{2}\-[0-9]{4})", join_tmp)
+                    match_tgl2 = re.search("([0-9]{2}\ [0-9]{2}\ [0-9]{4})", join_tmp)
+                    match_tgl3 = re.search("([0-9]{2}\-[0-9]{2}\ [0-9]{4})", join_tmp)
+                    match_tgl4 = re.search("([0-9]{2}\ [0-9]{2}\-[0-9]{4})", join_tmp)
+
+                    if match_tgl1:
+                        try:
+                            tgl_lahir = datetime.datetime.strptime(match_tgl1.group(), '%d-%m-%Y').date()
+                            tgl_lahir = tgl_lahir.strftime('%d-%m-%Y')
+                        except:
+                            tgl_lahir = ""
+                    elif match_tgl2:
+                        try:
+                            tgl_lahir = datetime.datetime.strptime(match_tgl2.group(), '%d %m %Y').date()
+                            tgl_lahir = tgl_lahir.strftime('%d-%m-%Y')
+                        except:
+                            tgl_lahir = ""
+                    elif match_tgl3:
+                        try:
+                            tgl_lahir = datetime.datetime.strptime(match_tgl3.group(), '%d-%m %Y').date()
+                            tgl_lahir = tgl_lahir.strftime('%d-%m-%Y')
+                        except:
+                            tgl_lahir = ""
+                    elif match_tgl4:
+                        try:
+                            tgl_lahir = datetime.datetime.strptime(match_tgl4.group(), '%d %m-%Y').date()
+                            tgl_lahir = tgl_lahir.strftime('%d-%m-%Y')
+                        except:
+                            tgl_lahir = ""
+                    else:
+                        tgl_lahir = ""
+                    
+                    if len(tmp_data) >= 2:
+                        for tmp_index, tmp_word in enumerate(tmp_data[2:]):
+                            tmp_sim_list = [textdistance.damerau_levenshtein.normalized_similarity(tmp_word, tmp_word_) for tmp_word_ in cities_df[0].values]
+
+                            tmp_sim_np = np.asarray(tmp_sim_list)
+                            arg_max = np.argmax(tmp_sim_np)
             
-        # if 'Kel/Desa' in tmp_data or 'Kel' in tmp_data or 'Desa' in tmp_data:
-        #     if len(tmp_data) >= 1:
-        #         for tmp_index, tmp_word in enumerate(tmp_data[1:]):
-        #             if tmp_word:
-        #                 tmp_sim_list = [textdistance.damerau_levenshtein.normalized_similarity(tmp_word, tmp_word_) for tmp_word_ in desa_kel_df[0].values]
+                            if tmp_sim_np[arg_max] >= 0.6:
+                                tmp_data[tmp_index + 2] = cities_df[0].values[arg_max]
+                                tempat_lahir = tmp_data[tmp_index + 2]
+                    # print(" ttl done")
+                            
+                if 'Kecamatan' in tmp_data:
+                    if len(tmp_data) >= 1:
+                        for tmp_index, tmp_word in enumerate(tmp_data[1:]):
+                            tmp_sim_list = [textdistance.damerau_levenshtein.normalized_similarity(tmp_word, tmp_word_) for tmp_word_ in distric_df[0].values]
 
-        #                 tmp_sim_np = np.asarray(tmp_sim_list)
-        #                 arg_max = np.argmax(tmp_sim_np)
-        #                 if tmp_sim_np[arg_max] >= 0.6:
-        #                     tmp_data[tmp_index + 1] = desa_kel_df[0].values[arg_max]
-        #         # print("kel des done")  
-                
-        if 'Jenis' in tmp_data or 'Kelamin' in tmp_data:
-            if len(tmp_data) >= 2:
-                for tmp_index, tmp_word in enumerate(tmp_data[2:]):
-                    tmp_sim_list = [textdistance.damerau_levenshtein.normalized_similarity(tmp_word, tmp_word_) for tmp_word_ in jenis_kelamin_df[0].values]
+                            tmp_sim_np = np.asarray(tmp_sim_list)
+                            arg_max = np.argmax(tmp_sim_np)
+                            
+                            if tmp_sim_np[arg_max] >= 0.6:
+                                tmp_data[tmp_index + 1] = distric_df[0].values[arg_max] 
+                        
+                if 'Pekerjaan' in tmp_data:
+                    if len(tmp_data) >= 1:
+                        for tmp_index, tmp_word in enumerate(tmp_data[1:]):
+                            tmp_sim_list = [textdistance.damerau_levenshtein.normalized_similarity(tmp_word, tmp_word_) for tmp_word_ in pekerjaan_df[0].values]
 
-                    tmp_sim_np = np.asarray(tmp_sim_list)
-                    arg_max = np.argmax(tmp_sim_np)
-
-                    if tmp_sim_np[arg_max] >= 0.6:
-                        tmp_data[tmp_index + 2] = jenis_kelamin_df[0].values[arg_max]
-            # print("jenis done")
+                            tmp_sim_np = np.asarray(tmp_sim_list)
+                            arg_max = np.argmax(tmp_sim_np)
+                            
+                            if tmp_sim_np[arg_max] >= 0.6:
+                                tmp_data[tmp_index + 1] = pekerjaan_df[0].values[arg_max]
+                                        
+                data.append(tmp_data)
+            clean_data = parsing(data)
+            # print(clean_data)
+            return clean_data
         
-        if 'Gol.' in tmp_data or ' Darah' in tmp_data or 'Darah' in tmp_data:
-            if len(tmp_data) >= 4:
-                if tmp_data[3] == '0':
-                        tmp_data[3] = tmp_data[3].replace('0', 'O')
-                if tmp_data[3] == '8':
-                        tmp_data[3] = tmp_data[3].replace('8', 'B')
-            # print("gol done")
-
-        if 'Tempat' in tmp_data or 'Tgl' in tmp_data or 'Lahir' in tmp_data:
-            join_tmp = ' '.join(tmp_data)
-
-            match_tgl1 = re.search("([0-9]{2}\-[0-9]{2}\-[0-9]{4})", join_tmp)
-            match_tgl2 = re.search("([0-9]{2}\ [0-9]{2}\ [0-9]{4})", join_tmp)
-            match_tgl3 = re.search("([0-9]{2}\-[0-9]{2}\ [0-9]{4})", join_tmp)
-            match_tgl4 = re.search("([0-9]{2}\ [0-9]{2}\-[0-9]{4})", join_tmp)
-
-            if match_tgl1:
-                try:
-                    tgl_lahir = datetime.datetime.strptime(match_tgl1.group(), '%d-%m-%Y').date()
-                    tgl_lahir = tgl_lahir.strftime('%d-%m-%Y')
-                except:
-                    tgl_lahir = ""
-            elif match_tgl2:
-                try:
-                    tgl_lahir = datetime.datetime.strptime(match_tgl2.group(), '%d %m %Y').date()
-                    tgl_lahir = tgl_lahir.strftime('%d-%m-%Y')
-                except:
-                    tgl_lahir = ""
-            elif match_tgl3:
-                try:
-                    tgl_lahir = datetime.datetime.strptime(match_tgl3.group(), '%d-%m %Y').date()
-                    tgl_lahir = tgl_lahir.strftime('%d-%m-%Y')
-                except:
-                    tgl_lahir = ""
-            elif match_tgl4:
-                try:
-                    tgl_lahir = datetime.datetime.strptime(match_tgl4.group(), '%d %m-%Y').date()
-                    tgl_lahir = tgl_lahir.strftime('%d-%m-%Y')
-                except:
-                    tgl_lahir = ""
-            else:
-                tgl_lahir = ""
-            
-            if len(tmp_data) >= 2:
-                for tmp_index, tmp_word in enumerate(tmp_data[2:]):
-                    tmp_sim_list = [textdistance.damerau_levenshtein.normalized_similarity(tmp_word, tmp_word_) for tmp_word_ in cities_df[0].values]
-
-                    tmp_sim_np = np.asarray(tmp_sim_list)
-                    arg_max = np.argmax(tmp_sim_np)
-    
-                    if tmp_sim_np[arg_max] >= 0.6:
-                        tmp_data[tmp_index + 2] = cities_df[0].values[arg_max]
-                        tempat_lahir = tmp_data[tmp_index + 2]
-            # print(" ttl done")
-                    
-        if 'Kecamatan' in tmp_data:
-            if len(tmp_data) >= 1:
-                for tmp_index, tmp_word in enumerate(tmp_data[1:]):
-                    tmp_sim_list = [textdistance.damerau_levenshtein.normalized_similarity(tmp_word, tmp_word_) for tmp_word_ in distric_df[0].values]
-
-                    tmp_sim_np = np.asarray(tmp_sim_list)
-                    arg_max = np.argmax(tmp_sim_np)
-                    
-                    if tmp_sim_np[arg_max] >= 0.6:
-                        tmp_data[tmp_index + 1] = distric_df[0].values[arg_max] 
-                  
-        if 'Pekerjaan' in tmp_data:
-            if len(tmp_data) >= 1:
-                for tmp_index, tmp_word in enumerate(tmp_data[1:]):
-                    tmp_sim_list = [textdistance.damerau_levenshtein.normalized_similarity(tmp_word, tmp_word_) for tmp_word_ in pekerjaan_df[0].values]
-
-                    tmp_sim_np = np.asarray(tmp_sim_list)
-                    arg_max = np.argmax(tmp_sim_np)
-                    
-                    if tmp_sim_np[arg_max] >= 0.6:
-                        tmp_data[tmp_index + 1] = pekerjaan_df[0].values[arg_max]
-                                
-        data.append(tmp_data)
-    clean_data = parsing(data)
-    # print("-"*30)
-    # print(clean_data)
-    return clean_data
+    except Exception as e:
+        pass
 
 if __name__ == '__main__':
     try:

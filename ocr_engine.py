@@ -4,7 +4,7 @@ import time
 import threading
 import numpy as np
 import tensorflow as tf
-import ocr as OCR
+# import ocr as OCR  #==> using pyc format file.
 import imp
 from json import dumps, loads
 from picamera2 import Picamera2
@@ -14,19 +14,19 @@ from defisheye import Defisheye
 from gpiozero import CPUTemperature
 
 
-MQTT = imp.load_compiled("mqttservice", "/home/rnd/Development/OCR_RASPI/__pycache__/mqttservice.cpython-39.pyc")
-#OCR = imp.load_compiled("ocr", "/home/rnd/Development/OCR_RASPI/__pycache__/ocr.cpython-39.pyc")
+MQTT = imp.load_compiled("mqttservice", "/home/rnd/Development/FINAL/run/mqttservice.cpython-39.pyc")
+OCR = imp.load_compiled("ocr", "/home/rnd/Development/FINAL/run/ocr.cpython-39.pyc")
 
 class ImageCameraProcesing:
     def __init__(self, model_path):
         self.cam = Picamera2()
-        self.File = "images/image.jpg"
-        self.resolution = (3280, 2464) #(1920, 1080)
+        self.File = "/home/rnd/Development/FINAL/images/image.jpg"
+        self.resolution = (3280, 2464)
         self.format = "RGB888"
         self.gambar = None
         self.imageocr = None
-        self.fishEye = "fisheye/result_fishEye.jpg"
-        self.zoom = "images/cropped_image.jpg"
+        self.fishEye = "/home/rnd/Development/FINAL/fisheye/result_fishEye.jpg"
+        self.zoom = "/home/rnd/Development/FINAL/images/cropped_image.jpg"
         self.config = self.cam.create_still_configuration(main={"size":(self.resolution), "format":self.format},
                                                           raw={"size":self.cam.sensor_resolution})
         self.cam.configure(self.config)
@@ -101,7 +101,7 @@ class ExtractFromUpload:
     def __init__(self, model_path) -> None:
         self.upload = None
         self.get_image = None
-        self.path = "images/from_upload.jpg"
+        self.path = "/home/rnd/Development/FINAL/images/from_upload.jpg"
         self.interpreter = tf.lite.Interpreter(model_path)
         self.interpreter.allocate_tensors()
         self.input_details = self.interpreter.get_input_details()
@@ -116,7 +116,7 @@ class ExtractFromUpload:
     def ExtractClasifyImage(self): #not use for classify
         if self.get_image is not None:
             # print(self.image.shape)
-            image = cv2.imread("images/from_upload.jpg")
+            image = cv2.imread(self.path)
             image = cv2.resize(image, (150, 150))  # Perbaikan pada baris ini, mengubah dari image(150, 150) menjadi cv2.resize(image, (150, 150))
             input_data = np.array(image) / 255.0  # Normalize to [0, 1]
             input_data = input_data.reshape((1, 150, 150, 3))
@@ -233,7 +233,7 @@ def monitordevice(client):
         
 if __name__ == "__main__":
     client = MQTT.MQTTClient('ocr.local', 1883)
-    model_path="models/ktp.tflite"
+    model_path="/home/rnd/Development/FINAL/models/ktp.tflite"
     camera = ImageCameraProcesing(model_path)
     upload = ExtractFromUpload(model_path)
     main_thread = threading.Thread(target=main, args=(client, camera, upload))
