@@ -13,7 +13,6 @@ from io import BytesIO
 from defisheye import Defisheye
 from gpiozero import CPUTemperature
 
-
 MQTT = imp.load_compiled("mqttservice", "/home/rnd/Development/OCR_RASPI/__pycache__/mqttservice.cpython-39.pyc")
 #OCR = imp.load_compiled("ocr", "/home/rnd/Development/OCR_RASPI/__pycache__/ocr.cpython-39.pyc")
 
