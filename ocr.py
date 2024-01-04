@@ -252,7 +252,7 @@ def parsing(data):
         for item in data:
             # print(item)
             # print(item[0])
-            if item != None and len(item) >= 2:
+            if item != None and len(item) >= 3:
                 key = item[0]
                 value = ' '.join(item[2:]).replace(':', '').strip()
                 # value = None
@@ -326,6 +326,9 @@ def parsing(data):
                             json_data["kewarganegaraan"]=warga
                             
                 json_data["readstatus"]="Successfully read information from the ID card image."
+            else:
+                json_data["readstatus"]="Failed to read information from the ID card image."
+                
     except Exception as e:
         print(f"Error: {e}. Masalah terjadi saat mengakses elemen list parsing.") 
     # print("Errornya parsing")                            
@@ -640,13 +643,12 @@ def main(image):
                             if tmp_sim_np[arg_max] >= 0.6:
                                 tmp_data[tmp_index + 1] = pekerjaan_df[0].values[arg_max]
                                         
-                data.append(tmp_data)
-            clean_data = parsing(data)
-            # print(clean_data)
-            return clean_data
-        
+                data.append(tmp_data)         
     except Exception as e:
-        pass
+        print(f"Error: {e}")
+    
+    clean_data = parsing(data)
+    return clean_data
 
 if __name__ == '__main__':
     try:
